@@ -99,35 +99,85 @@ Where:
 ## Program
 
 ```python
+import gymnasium as gym
+import numpy as np
 
+# Create FrozenLake environment
+env = gym.make("FrozenLake-v1", map_name="4x4", is_slippery=True)
 
-# -------------------------------------------------
-# Policy Evaluation Function
-# -------------------------------------------------
+# Access the unwrapped environment to use the transition model
+env = env.unwrapped
 
+# Number of states and actions
+n_states = env.observation_space.n
+n_actions = env.action_space.n
 
-# -------------------------------------------------
-# Display Output
-# -------------------------------------------------
+# Parameters
+gamma = 0.99
+theta = 1e-8
 
-# Change the parameters and observe the results
+# Random policy: each action has equal probability
+policy = np.ones((n_states, n_actions)) / n_actions
 
+def policy_evaluation(env, policy, gamma=0.99, theta=1e-8):
+    """
+    Evaluates a given policy using iterative policy evaluation and returns V and the iteration count.
+    """
+    V = np.zeros(n_states)
+    iterations = 0
+
+    while True:
+        delta = 0
+        iterations += 1
+
+        for state in range(n_states):
+            old_value = V[state]
+            new_value = 0
+
+            for action in range(n_actions):
+                action_probability = policy[state][action]
+
+                for probability, next_state, reward, terminated in env.P[state][action]:
+                    new_value += action_probability * probability * (
+                        reward + gamma * V[next_state] * (not terminated)
+                    )
+
+            V[state] = new_value
+            delta = max(delta, abs(old_value - V[state]))
+
+        if delta < theta:
+            break
+
+    return V, iterations
+
+# Run policy evaluation
+V, iterations = policy_evaluation(env, policy, gamma, theta)
+
+print("Name: Sriram R")
+print("Register Number: 212223230215")
+print(f"Number of iterations to converge: {iterations}")
+print("\nState-Value Function:")
+print(V)
+
+print("Name: Sriram R")
+print("Register Number: 212223230215")
+print("\nState-Value Function as 4x4 Grid:")
+print(np.round(V.reshape(4, 4), 4))
+
+env.close()
 ```
 
 ---
 
 ## Output
+Gamma value is :0.99
 
-```text
+<img width="744" height="359" alt="image" src="https://github.com/user-attachments/assets/f6d74fe6-2b05-4667-b06e-05cc5da70cd5" />
 
-Number of Iterations: 
+Gamma value is :0.9
 
-State-Value Function as 4x4 Grid:
+<img width="630" height="358" alt="image" src="https://github.com/user-attachments/assets/55b28794-1ed1-4bcf-8639-e40559bbc019" />
 
-
-
-```
----
 
 ## Result
 
@@ -138,7 +188,11 @@ Iterative policy evaluation was implemented successfully using the Gymnasium Fro
 ## Inference
 
 ```text
+When gamma decreases from 0.99 to 0.9, the state values decrease because future rewards are given less importance.
 
+The number of iterations decreases from 54 to 38, showing faster convergence with a lower gamma value.
+
+A higher gamma value considers long-term rewards more, while a lower gamma value focuses more on immediate rewards.
 
 
 ```
